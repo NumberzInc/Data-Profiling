@@ -33,6 +33,12 @@ class HistoryConfig:
 
 
 @dataclass
+class FreshnessConfig:
+    trusted_timestamp_columns: dict[str, str] = field(default_factory=dict)
+    expected_update_intervals_hours: dict[str, float] = field(default_factory=dict)
+
+
+@dataclass
 class YDataConfig:
     include_raw: bool = False
     explorative: bool = True
@@ -44,6 +50,7 @@ class ProfilingConfig:
     sampling: SamplingConfig = field(default_factory=SamplingConfig)
     thresholds: ThresholdsConfig = field(default_factory=ThresholdsConfig)
     history: HistoryConfig = field(default_factory=HistoryConfig)
+    freshness: FreshnessConfig = field(default_factory=FreshnessConfig)
     ydata: YDataConfig = field(default_factory=YDataConfig)
 
 
@@ -60,6 +67,7 @@ def load_config(path: Path | None) -> ProfilingConfig:
     _apply_section(config.sampling, raw.get("sampling", {}))
     _apply_section(config.thresholds, raw.get("thresholds", {}))
     _apply_section(config.history, raw.get("history", {}))
+    _apply_section(config.freshness, raw.get("freshness", {}))
     _apply_section(config.ydata, raw.get("ydata", {}))
     return config
 
@@ -78,4 +86,3 @@ def _apply_section(target: Any, values: Any) -> None:
 
     for key, value in values.items():
         setattr(target, key, value)
-

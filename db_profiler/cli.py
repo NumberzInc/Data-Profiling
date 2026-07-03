@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Sequence
 
 from .config import load_config
+from .features.growth_freshness_profile import append_profile_history
 from .loaders import load_csv_tables
 from .output import write_profile_json
 from .runner import build_profile
@@ -69,8 +70,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         tables = load_csv_tables(args.table_csv, sample_rows=config.sampling.sample_rows)
         profile = build_profile(tables=tables, config=config)
         write_profile_json(profile, args.output)
+        append_profile_history(profile, Path(config.history.path) if config.history.path else None)
         return 0
 
     parser.error(f"Unsupported command: {args.command}")
     return 2
-
