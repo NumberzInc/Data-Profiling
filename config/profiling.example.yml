@@ -14,6 +14,9 @@ thresholds:
 history:
   path: state/profile_history.jsonl
 
+semantic_aliases:
+  aliases: {}
+
 ydata:
   include_raw: false
   explorative: true

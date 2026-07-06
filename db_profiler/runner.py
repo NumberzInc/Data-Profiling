@@ -11,6 +11,7 @@ from .config import ProfilingConfig
 from .features.case_profile import profile_table_case_conventions
 from .features.format_profile import profile_table_format_patterns
 from .features.normalized_join_profile import profile_normalized_join_compatibility
+from .features.semantic_alias_profile import profile_table_semantic_aliases
 from .output import empty_profile_document
 from .ydata_profile import YDataProfiler
 
@@ -55,6 +56,11 @@ def build_profile(
                 "format_profile": profile_table_format_patterns(
                     frame,
                     min_affix_frequency=config.thresholds.min_affix_frequency,
+                ),
+                "semantic_alias_profile": profile_table_semantic_aliases(
+                    table_name,
+                    frame,
+                    configured_aliases=config.semantic_aliases.aliases,
                 ),
             },
             "ydata_profile": profiler.profile_dataframe(table_name, frame),
