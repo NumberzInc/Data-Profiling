@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Mapping
 from uuid import uuid4
 
@@ -10,7 +11,14 @@ from . import __version__
 from .config import ProfilingConfig
 from .features.case_profile import profile_table_case_conventions
 from .features.format_profile import profile_table_format_patterns
+from .features.growth_freshness_profile import (
+    append_history_entry,
+    load_history,
+    profile_table_growth_freshness,
+)
+from .features.isolated_table_profile import profile_isolated_tables
 from .features.normalized_join_profile import profile_normalized_join_compatibility
+from .features.wide_table_profile import profile_wide_table
 from .output import empty_profile_document
 from .ydata_profile import YDataProfiler
 
@@ -23,6 +31,8 @@ def build_profile(
     profiler = ydata_profiler or YDataProfiler(include_raw=config.ydata.include_raw, explorative=config.ydata.explorative)
     document = empty_profile_document()
     profiled_at = datetime.now(timezone.utc).isoformat()
+    history_path = Path(config.history.path)
+    history = load_history(history_path)
 
     document["metadata"] = {
         "run_id": str(uuid4()),
@@ -56,15 +66,33 @@ def build_profile(
                     frame,
                     min_affix_frequency=config.thresholds.min_affix_frequency,
                 ),
+                "wide_table_profile": profile_wide_table(
+                    frame,
+                    wide_table_threshold=config.thresholds.wide_table_columns,
+                ),
             },
+            "growth_freshness_profile": profile_table_growth_freshness(
+                table_name=table_name,
+                frame=frame,
+                history=history,
+            ),
             "ydata_profile": profiler.profile_dataframe(table_name, frame),
         }
+
+    for table_name, frame in tables.items():
+        append_history_entry(history_path, {
+            "table": table_name,
+            "row_count": int(len(frame)),
+            "profiled_at": profiled_at,
+        })
 
     document["relationships"]["normalized_join_candidates"] = profile_normalized_join_compatibility(
         tables,
         max_collision_rate=config.thresholds.max_normalized_collision_rate,
         min_match_rate=config.thresholds.min_join_match_rate,
     )
+
+    document["database_health"]["isolated_tables"] = profile_isolated_tables(tables)
 
     return document
 
