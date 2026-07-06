@@ -11,6 +11,7 @@ from .config import ProfilingConfig
 from .features.case_profile import profile_table_case_conventions
 from .features.format_profile import profile_table_format_patterns
 from .features.normalized_join_profile import profile_normalized_join_compatibility
+from .features.phone_profile import profile_table_phone_numbers
 from .output import empty_profile_document
 from .ydata_profile import YDataProfiler
 
@@ -55,6 +56,12 @@ def build_profile(
                 "format_profile": profile_table_format_patterns(
                     frame,
                     min_affix_frequency=config.thresholds.min_affix_frequency,
+                ),
+                "phone_profile": profile_table_phone_numbers(
+                    table_name,
+                    frame,
+                    configured_columns=config.phone_profile.columns,
+                    default_country=config.phone_profile.default_country,
                 ),
             },
             "ydata_profile": profiler.profile_dataframe(table_name, frame),

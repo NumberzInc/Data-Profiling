@@ -33,6 +33,12 @@ class HistoryConfig:
 
 
 @dataclass
+class PhoneProfileConfig:
+    default_country: str = "US"
+    columns: dict[str, list[str]] = field(default_factory=dict)
+
+
+@dataclass
 class YDataConfig:
     include_raw: bool = False
     explorative: bool = True
@@ -44,6 +50,7 @@ class ProfilingConfig:
     sampling: SamplingConfig = field(default_factory=SamplingConfig)
     thresholds: ThresholdsConfig = field(default_factory=ThresholdsConfig)
     history: HistoryConfig = field(default_factory=HistoryConfig)
+    phone_profile: PhoneProfileConfig = field(default_factory=PhoneProfileConfig)
     ydata: YDataConfig = field(default_factory=YDataConfig)
 
 
@@ -60,6 +67,7 @@ def load_config(path: Path | None) -> ProfilingConfig:
     _apply_section(config.sampling, raw.get("sampling", {}))
     _apply_section(config.thresholds, raw.get("thresholds", {}))
     _apply_section(config.history, raw.get("history", {}))
+    _apply_section(config.phone_profile, raw.get("phone_profile", {}))
     _apply_section(config.ydata, raw.get("ydata", {}))
     return config
 
