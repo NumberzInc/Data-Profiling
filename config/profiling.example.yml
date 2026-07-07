@@ -14,7 +14,10 @@ thresholds:
 history:
   path: state/profile_history.jsonl
 
+freshness:
+  trusted_timestamp_columns: {}
+  expected_update_intervals_hours: {}
+
 ydata:
   include_raw: false
   explorative: true
-

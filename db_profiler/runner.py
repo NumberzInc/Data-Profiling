@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Mapping
 from uuid import uuid4
 
@@ -10,6 +11,7 @@ from . import __version__
 from .config import ProfilingConfig
 from .features.case_profile import profile_table_case_conventions
 from .features.format_profile import profile_table_format_patterns
+from .features.growth_freshness_profile import load_previous_table_profiles, profile_table_growth_and_freshness
 from .features.inferred_fk_profile import profile_inferred_foreign_keys
 from .features.normalized_join_profile import profile_normalized_join_compatibility
 from .output import empty_profile_document
@@ -24,6 +26,8 @@ def build_profile(
     profiler = ydata_profiler or YDataProfiler(include_raw=config.ydata.include_raw, explorative=config.ydata.explorative)
     document = empty_profile_document()
     profiled_at = datetime.now(timezone.utc).isoformat()
+    profiled_at_datetime = datetime.fromisoformat(profiled_at)
+    previous_table_profiles = load_previous_table_profiles(Path(config.history.path) if config.history.path else None)
 
     document["metadata"] = {
         "run_id": str(uuid4()),
@@ -58,6 +62,14 @@ def build_profile(
                     min_affix_frequency=config.thresholds.min_affix_frequency,
                 ),
             },
+            "growth_freshness_profile": profile_table_growth_and_freshness(
+                table_name=table_name,
+                frame=frame,
+                profiled_at=profiled_at_datetime,
+                previous_profile=previous_table_profiles.get(table_name),
+                trusted_timestamp_column=config.freshness.trusted_timestamp_columns.get(table_name),
+                expected_update_interval_hours=config.freshness.expected_update_intervals_hours.get(table_name),
+            ),
             "ydata_profile": profiler.profile_dataframe(table_name, frame),
         }
 

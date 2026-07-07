@@ -30,6 +30,7 @@ def test_profile_command_writes_json_from_csv_fixture(monkeypatch, tmp_path: Pat
         "query_generation_hints": {"join_graph": [], "do_not_auto_join": []},
     })
     output_path = tmp_path / "profile.json"
+    history_path = tmp_path / "profile_history.jsonl"
     fixture_path = Path("tests/fixtures/customers.csv")
 
     exit_code = cli.main(
@@ -41,6 +42,8 @@ def test_profile_command_writes_json_from_csv_fixture(monkeypatch, tmp_path: Pat
             "2",
             "--output",
             str(output_path),
+            "--history",
+            str(history_path),
         ]
     )
 
@@ -49,4 +52,4 @@ def test_profile_command_writes_json_from_csv_fixture(monkeypatch, tmp_path: Pat
     assert loaded["metadata"]["sampling"]["sample_rows"] == 2
     assert loaded["metadata"]["table_names"] == ["customers"]
     assert loaded["tables"]["customers"]["row_count"] == 2
-
+    assert history_path.exists()
