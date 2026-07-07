@@ -1,0 +1,31 @@
+database:
+  schema: public
+  include_tables:
+    - customers
+    - orders
+
+sampling:
+  mode: sampled
+  sample_rows: 50000
+
+thresholds:
+  wide_table_columns: 75
+  max_normalized_collision_rate: 0.10
+  min_join_match_rate: 0.50
+  min_affix_frequency: 0.25
+
+history:
+  path: output/demo_history.jsonl
+
+freshness:
+  trusted_timestamp_columns:
+    customers: updated_at
+    orders: updated_at
+  expected_update_intervals_hours:
+    customers: 72
+    orders: 24
+
+ydata:
+  include_raw: false
+  explorative: true
+

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Mapping
+from time import perf_counter
+from typing import Any, Mapping
 from uuid import uuid4
 
 import pandas as pd
@@ -22,12 +23,15 @@ def build_profile(
     tables: Mapping[str, pd.DataFrame],
     config: ProfilingConfig,
     ydata_profiler: YDataProfiler | None = None,
+    table_load_metadata: Mapping[str, dict[str, Any]] | None = None,
 ) -> dict:
+    profile_started_at = perf_counter()
     profiler = ydata_profiler or YDataProfiler(include_raw=config.ydata.include_raw, explorative=config.ydata.explorative)
     document = empty_profile_document()
     profiled_at = datetime.now(timezone.utc).isoformat()
     profiled_at_datetime = datetime.fromisoformat(profiled_at)
     previous_table_profiles = load_previous_table_profiles(Path(config.history.path) if config.history.path else None)
+    table_load_metadata = table_load_metadata or {}
 
     document["metadata"] = {
         "run_id": str(uuid4()),
@@ -44,15 +48,21 @@ def build_profile(
         "history": {
             "path": config.history.path,
         },
+        "performance": {},
         "tool_versions": {
             "ydata_profiling": profiler.version,
         },
     }
 
     for table_name, frame in tables.items():
+        table_started_at = perf_counter()
+        load_metadata = table_load_metadata.get(table_name, {})
         document["tables"][table_name] = {
-            "row_count": int(len(frame)),
+            "row_count": int(load_metadata.get("source_row_count", len(frame))),
+            "source_row_count": load_metadata.get("source_row_count"),
             "sample_count": int(len(frame)),
+            "sample_row_limit": load_metadata.get("sample_row_limit", config.sampling.sample_rows),
+            "load_metadata": load_metadata,
             "column_count": int(len(frame.columns)),
             "columns": _column_metadata(frame),
             "custom_profiles": {
@@ -72,6 +82,7 @@ def build_profile(
             ),
             "ydata_profile": profiler.profile_dataframe(table_name, frame),
         }
+        document["tables"][table_name]["profile_duration_seconds"] = round(perf_counter() - table_started_at, 4)
 
     document["relationships"]["normalized_join_candidates"] = profile_normalized_join_compatibility(
         tables,
@@ -82,6 +93,7 @@ def build_profile(
         tables,
         min_confidence=0.50,
     )
+    document["metadata"]["performance"]["total_profile_duration_seconds"] = round(perf_counter() - profile_started_at, 4)
 
     return document
 

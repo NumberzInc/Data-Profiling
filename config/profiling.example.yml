@@ -1,5 +1,6 @@
 database:
   schema: public
+  include_tables: []
 
 sampling:
   mode: sampled

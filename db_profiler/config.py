@@ -11,6 +11,7 @@ import yaml
 class DatabaseConfig:
     url: str | None = None
     schema: str = "public"
+    include_tables: list[str] = field(default_factory=list)
 
 
 @dataclass
