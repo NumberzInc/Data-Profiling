@@ -10,6 +10,7 @@ from . import __version__
 from .config import ProfilingConfig
 from .features.case_profile import profile_table_case_conventions
 from .features.format_profile import profile_table_format_patterns
+from .features.inferred_fk_profile import profile_inferred_foreign_keys
 from .features.normalized_join_profile import profile_normalized_join_compatibility
 from .output import empty_profile_document
 from .ydata_profile import YDataProfiler
@@ -64,6 +65,10 @@ def build_profile(
         tables,
         max_collision_rate=config.thresholds.max_normalized_collision_rate,
         min_match_rate=config.thresholds.min_join_match_rate,
+    )
+    document["relationships"]["inferred_candidates"] = profile_inferred_foreign_keys(
+        tables,
+        min_confidence=0.50,
     )
 
     return document
