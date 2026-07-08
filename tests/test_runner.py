@@ -38,11 +38,32 @@ def test_build_profile_returns_stable_json_contract_for_tables() -> None:
     }
     assert document["metadata"]["sampling"]["mode"] == "sampled"
     assert document["metadata"]["tool_versions"]["ydata_profiling"] == "stub"
+    assert document["metadata"]["ydata"]["enabled"] is True
     assert document["tables"]["customers"]["row_count"] == 3
     assert document["tables"]["customers"]["sample_count"] == 3
     assert document["tables"]["customers"]["column_count"] == 2
     assert document["tables"]["customers"]["columns"]["name"]["dtype"] == "object"
+    assert document["tables"]["customers"]["ydata_profile"]["enabled"] is True
     assert document["tables"]["customers"]["ydata_profile"]["table"]["n"] == 3
+
+
+def test_build_profile_can_skip_ydata_by_config() -> None:
+    config = ProfilingConfig()
+    config.ydata.enabled = False
+    frame = pd.DataFrame({"customer_id": [1, 2, 3]})
+
+    document = build_profile(
+        tables={"customers": frame},
+        config=config,
+        ydata_profiler=StubYDataProfiler(),
+    )
+
+    assert document["metadata"]["tool_versions"]["ydata_profiling"] is None
+    assert document["metadata"]["ydata"]["enabled"] is False
+    assert document["tables"]["customers"]["ydata_profile"] == {
+        "enabled": False,
+        "skipped_reason": "disabled_by_config",
+    }
 
 
 def test_build_profile_uses_source_row_count_metadata_for_sampled_tables() -> None:

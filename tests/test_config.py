@@ -29,6 +29,7 @@ def test_load_config_overrides_known_sections(tmp_path: Path) -> None:
                 "history:",
                 "  path: state/test.jsonl",
                 "ydata:",
+                "  enabled: false",
                 "  include_raw: true",
             ]
         ),
@@ -41,6 +42,7 @@ def test_load_config_overrides_known_sections(tmp_path: Path) -> None:
     assert config.sampling.sample_rows == 25
     assert config.thresholds.wide_table_columns == 40
     assert config.history.path == "state/test.jsonl"
+    assert config.ydata.enabled is False
     assert config.ydata.include_raw is True
 
 
@@ -50,4 +52,3 @@ def test_load_config_rejects_unknown_options(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Unknown config option"):
         load_config(config_path)
-

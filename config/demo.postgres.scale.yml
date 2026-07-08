@@ -26,6 +26,6 @@ freshness:
     orders_scale: 24
 
 ydata:
+  enabled: true
   include_raw: false
   explorative: true
-

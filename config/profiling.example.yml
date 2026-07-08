@@ -20,5 +20,6 @@ freshness:
   expected_update_intervals_hours: {}
 
 ydata:
+  enabled: true
   include_raw: false
   explorative: true

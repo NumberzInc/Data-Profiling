@@ -26,7 +26,9 @@ def build_profile(
     table_load_metadata: Mapping[str, dict[str, Any]] | None = None,
 ) -> dict:
     profile_started_at = perf_counter()
-    profiler = ydata_profiler or YDataProfiler(include_raw=config.ydata.include_raw, explorative=config.ydata.explorative)
+    profiler = None
+    if config.ydata.enabled:
+        profiler = ydata_profiler or YDataProfiler(include_raw=config.ydata.include_raw, explorative=config.ydata.explorative)
     document = empty_profile_document()
     profiled_at = datetime.now(timezone.utc).isoformat()
     profiled_at_datetime = datetime.fromisoformat(profiled_at)
@@ -50,7 +52,10 @@ def build_profile(
         },
         "performance": {},
         "tool_versions": {
-            "ydata_profiling": profiler.version,
+            "ydata_profiling": profiler.version if profiler else None,
+        },
+        "ydata": {
+            "enabled": config.ydata.enabled,
         },
     }
 
@@ -80,7 +85,7 @@ def build_profile(
                 trusted_timestamp_column=config.freshness.trusted_timestamp_columns.get(table_name),
                 expected_update_interval_hours=config.freshness.expected_update_intervals_hours.get(table_name),
             ),
-            "ydata_profile": profiler.profile_dataframe(table_name, frame),
+            "ydata_profile": _ydata_profile(table_name, frame, profiler),
         }
         document["tables"][table_name]["profile_duration_seconds"] = round(perf_counter() - table_started_at, 4)
 
@@ -106,6 +111,17 @@ def _column_metadata(frame: pd.DataFrame) -> dict:
         }
         for column in frame.columns
     }
+
+
+def _ydata_profile(table_name: str, frame: pd.DataFrame, profiler: YDataProfiler | None) -> dict:
+    if profiler is None:
+        return {
+            "enabled": False,
+            "skipped_reason": "disabled_by_config",
+        }
+    profile = profiler.profile_dataframe(table_name, frame)
+    profile["enabled"] = True
+    return profile
 
 
 def _redact_url(url: str | None) -> str | None:

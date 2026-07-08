@@ -41,6 +41,7 @@ class FreshnessConfig:
 
 @dataclass
 class YDataConfig:
+    enabled: bool = True
     include_raw: bool = False
     explorative: bool = True
 
